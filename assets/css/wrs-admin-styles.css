@@ -1,0 +1,17 @@
+/* Oculta las secciones de dirección de WooCommerce en el perfil de usuario del admin */
+#billing,
+#shipping,
+.user-billing-fields, /* Clases comunes usadas por WC */
+.user-shipping-fields {
+    display: none !important;
+}
+
+/* Intenta ocultar también los títulos h2 si los IDs no funcionan (puede variar por tema/traducción) */
+/* Descomenta estas líneas si lo anterior no oculta los títulos */
+/*
+h2:contains("Dirección de facturación"),
+h2:contains("Dirección de envío"),
+h2:contains("Dirección de pedido del cliente") {
+    display: none !important;
+}
+*/

@@ -1,0 +1,205 @@
+Documentación Técnica Detallada: Plugin "Referral System Elextor (WRS)"
+
+Versión del Plugin: 1.1.0 (Sugerida después de la reestructuración)
+Autor: Juan Esteban Lugo Rodriguez
+Text Domain: woodmart-referral-system
+
+1. Propósito General del Plugin:
+
+El plugin WRS tiene como objetivo implementar un sistema de referidos basado en una estructura de red jerárquica (árbol genealógico) dentro de un sitio WordPress que utiliza el tema WoodMart y el constructor Elementor Pro. Está diseñado para la gestión de información y la movilización de usuarios en contextos como campañas políticas, donde la seguridad de los datos y la robustez del sistema son críticas. Los usuarios pueden referir a otros, y estos referidos se vinculan a una "Iniciativa" (campaña) específica a través de la cual se originó su registro.
+
+2. Estructura de Archivos y Carpetas del Plugin:
+
+La estructura actual del plugin es la siguiente:
+
+woodmart-referral-system/
+|-- woodmart-referral-system.php       (Archivo principal del plugin)
+|-- assets/
+|   |-- css/
+|   |   |-- wrs-frontend-styles.css  (Estilos para el frontend)
+|   |   `-- wrs-admin-styles.css     (Estilos para el área de administración)
+|   `-- js/
+|       |-- wrs-registration-dynamics.js (Lógica JS para campos dinámicos en el registro)
+|       `-- wrs-genealogy-chart.js     (Lógica JS para renderizar gráficos de genealogía)
+|-- includes/
+|   |-- wrs-core-functions.php         (Funciones helper generales, datos geográficos, opciones de select)
+|   |-- wrs-cpt-tax.php                (Registro del CPT "Iniciativas" y su taxonomía)
+|   |-- wrs-shortcodes.php             (Definición del shortcode [wrs_register_button])
+|   |-- wrs-ajax-handlers.php          (Manejador AJAX para la carga dinámica de municipios)
+|   |-- wrs-user-registration.php      (Campos de registro de WC, validación, guardado de metas, lógica post-registro)
+|   |-- wrs-user-account.php           (Endpoints y contenido de "Mi Cuenta" de WC)
+|   |-- wrs-referral-logic.php         (Captura de referente/iniciativa, funciones de genealogía)
+|   |-- wrs-enqueue-assets.php         (Encolado centralizado de todos los scripts y estilos)
+|   |-- admin/
+|   |   |-- wrs-admin-menu.php         (Creación de la página de admin "Red de Referidos")
+|   |   |-- wrs-admin-network-page.php (Contenido y filtro de la página "Red de Referidos")
+|   |   |-- wrs-admin-user-profile.php (Modificaciones a la página de perfil de usuario en el admin)
+|   |   `-- wrs-admin-export.php       (Lógica para la exportación de datos a CSV)
+|   `-- integrations/
+|       `-- wrs-zoho-integration.php   (Ajustes de Zoho CRM y lógica de envío de datos)
+|-- languages/
+|   `-- woodmart-referral-system.pot   (Archivo de plantilla para traducciones)
+`-- templates/
+    `-- single-wrs_landing_page-template.php (Plantilla para el CPT "Iniciativas")
+3. Descripción Detallada de Archivos y Funcionalidades Clave:
+
+3.1. woodmart-referral-system.php (Archivo Principal)
+
+Rol: Actúa como el punto de entrada y "director de orquesta" del plugin.
+Contenido:
+Cabecera del plugin (información estándar de WordPress).
+Definición de constantes globales del plugin: WRS_PLUGIN_VERSION, WRS_PLUGIN_DIR_PATH (ruta del directorio), WRS_PLUGIN_DIR_URL (URL del directorio), WRS_PLUGIN_FILE (ruta al archivo principal).
+Inclusión (require_once) de todos los archivos PHP funcionales desde la carpeta includes/. El orden de inclusión es importante para asegurar la disponibilidad de funciones cuando se registran los hooks.
+Registro centralizado de todos los add_action y add_filter que conectan las funciones del plugin con los hooks de WordPress y WooCommerce.
+Funciones y hooks de activación (wrs_plugin_on_activate) y desactivación (wrs_plugin_on_deactivate) del plugin, que incluyen flush_rewrite_rules().
+3.2. includes/wrs-core-functions.php
+
+Rol: Contiene funciones helper de utilidad general y datos base.
+Funciones Clave:
+wrs_start_session(): Inicia la sesión PHP si no está activa (hook init).
+wrs_get_colombia_geo_data(): Devuelve un array PHP con la estructura de departamentos y municipios de Colombia (claves y nombres).
+wrs_get_bogota_localidades(): Devuelve un array con las localidades de Bogotá.
+wrs_get_options(): Devuelve arrays de opciones predefinidas para campos select en formularios (ej. tipo de documento, género, estado civil, etc.), con soporte para internacionalización.
+wrs_get_all_descendants_ids(): Función recursiva/iterativa para obtener todos los IDs de los descendientes de un usuario o grupo de usuarios en la red de referidos.
+3.3. includes/wrs-cpt-tax.php
+
+Rol: Registra el Custom Post Type (CPT) y las taxonomías personalizadas.
+Funciones Clave:
+wrs_register_initiatives_cpt(): Registra el CPT wrs_landing_page (mostrado como "Iniciativas"). Define labels, slug público (/iniciativa/), ícono, y soportes (incluyendo elementor).
+wrs_register_initiative_category_taxonomy(): Registra la taxonomía wrs_landing_category (mostrada como "Categorías de Iniciativa") asociada al CPT wrs_landing_page, con slug público /categoria-iniciativa/.
+wrs_include_initiative_template(): Filtra template_include para usar templates/single-wrs_landing_page-template.php para la vista individual de las "Iniciativas".
+3.4. includes/wrs-shortcodes.php
+
+Rol: Define los shortcodes del plugin.
+Funciones Clave:
+wrs_register_button_shortcode_handler(): Implementa el shortcode [wrs_register_button text="Tu Texto" class="tu_clase"]. Este shortcode genera un botón que enlaza a la página de registro de WooCommerce. Si la página actual (donde se usa el shortcode, típicamente una "Iniciativa") tiene un parámetro ?ref=user_login en su URL, este ref se añade a la URL del botón de registro.
+3.5. includes/wrs-ajax-handlers.php
+
+Rol: Contiene los manejadores para las peticiones AJAX.
+Funciones Clave:
+wrs_ajax_get_municipios_handler(): Maneja la petición AJAX (para usuarios logueados y no logueados) enviada por assets/js/wrs-registration-dynamics.js. Recibe una clave de departamento y devuelve un JSON con los municipios correspondientes (claves y nombres decodificados) usando wrs_get_colombia_geo_data(). Maneja el caso especial de Bogotá.
+3.6. includes/wrs-user-registration.php
+
+Rol: Centraliza toda la lógica relacionada con la modificación del formulario de registro de WooCommerce y el procesamiento de esos datos.
+Funciones Clave:
+wrs_add_custom_registration_fields(): Añade numerosos campos personalizados (wrs_*) al formulario de registro de WooCommerce (woocommerce_register_form). Utiliza wrs_get_options() y wrs_get_colombia_geo_data() para poblar los selectores. Mantiene los valores enviados por POST si hay errores de validación.
+wrs_validate_custom_registration_fields(): Valida los campos personalizados obligatorios. También implementa una validación para verificar si un email ya está registrado. Si es así, intenta remover el error genérico de WooCommerce y añade uno personalizado que indica "Ud. ya está inscrito en la red desde la iniciativa XXXXXX", obteniendo el título de la iniciativa de origen del usuario existente (_wrs_origin_landing_id).
+wrs_save_custom_registration_fields(): Se engancha a woocommerce_created_customer. Guarda todos los valores de los campos wrs_* en wp_usermeta. Mapea wrs_nombres y wrs_apellidos a first_name y last_name en wp_users. Guarda _wrs_origin_landing_id (desde la sesión PHP) y _wrs_referrer_id (desde la cookie) en wp_usermeta. Establece _wrs_can_refer a yes por defecto.
+wrs_prevent_autologin_after_registration(): Enganchado a wp_loaded. Si se está procesando un formulario de registro, añade un filtro a woocommerce_registration_auth_new_customer para que devuelva false, previniendo el inicio de sesión automático.
+wrs_registration_completed_actions(): Enganchado a woocommerce_created_customer (prioridad tardía). Asegura que el usuario recién registrado esté deslogueado (doble chequeo con wp_logout()) y añade un aviso de "¡Registro exitoso!" usando wc_add_notice(). La redirección a "Mi Cuenta" es manejada por defecto por WooCommerce.
+3.7. includes/wrs-user-account.php
+
+Rol: Maneja la creación de nuevos endpoints para "Mi Cuenta" de WooCommerce y el contenido de estas secciones.
+Funciones Clave:
+wrs_add_account_menu_items(): Añade "Links de Referencia", "Mi Red", y "Mi Perfil" al menú de "Mi Cuenta".
+wrs_add_account_endpoints(): Registra los slugs de los endpoints (referral-links, genealogy-tree, my-profile).
+wrs_referral_links_endpoint_content(): Muestra el contenido del endpoint "Links de Referencia". Para usuarios no administradores, muestra solo el link de referido de la iniciativa por la cual se registraron (basado en _wrs_origin_landing_id). Para administradores, muestra links de referido para todas las "Iniciativas" publicadas. Incluye un botón para copiar el link.
+wrs_genealogy_tree_endpoint_content(): Muestra el contenido del endpoint "Mi Red". Utiliza wrs_get_user_genealogy_data() y wrs_format_data_for_google_chart() (definidas en wrs-referral-logic.php) para obtener y formatear los datos de la descendencia del usuario actual y los renderiza usando Google Charts (el JS está en assets/js/wrs-genealogy-chart.js).
+wrs_my_profile_endpoint_content(): Muestra el contenido del endpoint "Mi Perfil". Presenta un formulario que permite al usuario ver y editar todos sus datos wrs_*, así como cambiar su contraseña y email (usando los campos estándar de WooCommerce para esto último). Repopula los campos con los datos guardados.
+wrs_validate_my_profile_details(): (Placeholder) Enganchado a woocommerce_save_account_details_errors para futuras validaciones personalizadas de los campos WRS en el formulario de "Mi Perfil".
+wrs_save_my_profile_details_action(): Enganchado a woocommerce_save_account_details. Guarda los valores de los campos wrs_* enviados desde el formulario "Mi Perfil". La actualización de email y contraseña es manejada por WooCommerce directamente.
+3.8. includes/wrs-referral-logic.php
+
+Rol: Contiene la lógica central para la captura de referentes/iniciativas y las funciones para construir el árbol genealógico.
+Funciones Clave:
+wrs_capture_referrer_and_initiative_session():
+Si hay un parámetro ?ref=user_login en la URL, obtiene el ID del usuario referente y lo guarda en una cookie wrs_referrer_id.
+Si la página actual es una "Iniciativa" (wrs_landing_page) y tiene el parámetro ref, guarda el ID de esta iniciativa en $_SESSION['wrs_origin_landing_id'].
+wrs_get_user_genealogy_data(): Función recursiva que construye un array PHP anidado con la estructura de descendientes de un usuario dado, obteniendo _wrs_referrer_id.
+wrs_format_data_for_google_chart(): Toma el array de wrs_get_user_genealogy_data() y lo formatea en el array de datos que espera la API de Google OrgChart.
+3.9. includes/admin/wrs-admin-menu.php
+
+Rol: Añade las páginas del plugin al menú de administración de WordPress.
+Funciones Clave:
+wrs_add_referral_network_admin_menu(): Añade la página "Red de Referidos" como un submenú de "Usuarios". Especifica wrs_render_admin_network_page_content como la función callback para el contenido.
+3.10. includes/admin/wrs-admin-network-page.php
+
+Rol: Muestra el contenido de la página de administración "Red de Referidos".
+Funciones Clave:
+wrs_render_admin_network_page_content(): Muestra el título, el botón "Exportar Red a CSV", y un formulario con un desplegable <select> para filtrar la red por "Iniciativa". El div para el gráfico (#wrs_admin_chart_div) también se renderiza aquí. Los datos para el gráfico se preparan y se localizan en wrs_admin_enqueue_assets().
+3.11. includes/admin/wrs-admin-user-profile.php
+
+Rol: Modifica la página de edición de perfil de usuario en el administrador de WordPress.
+Funciones Clave:
+wrs_display_custom_user_profile_section(): Muestra una sección adicional en el perfil del usuario con toda la información wrs_* (leída de wp_usermeta), la información del referente, la "Iniciativa de Origen" (obteniendo el título a partir de _wrs_origin_landing_id), y un checkbox para editar el permiso _wrs_can_refer.
+wrs_save_custom_user_profile_fields(): Guarda el estado del checkbox _wrs_can_refer cuando se actualiza el perfil del usuario desde el administrador. Incluye verificación de nonce.
+3.12. includes/admin/wrs-admin-export.php
+
+Rol: Maneja la funcionalidad de exportación de datos a CSV.
+Funciones Clave:
+wrs_handle_network_data_export(): Se engancha a admin_action_export_wrs_network. Verifica nonce y permisos. Genera un archivo CSV con todos los usuarios y sus datos wrs_*, así como la información de su referente y, crucialmente, el "ID Iniciativa Origen" (_wrs_origin_landing_id) y el "Título Iniciativa Origen". Utiliza fputcsv() y establece las cabeceras HTTP correctas para la descarga. Incluye BOM UTF-8.
+3.13. includes/integrations/wrs-zoho-integration.php
+
+Rol: Contiene toda la lógica para la integración con Zoho CRM.
+Funciones Clave (Parte A - Ajustes):
+wrs_add_zoho_settings_page_menu(): Añade la página "Zoho CRM (WRS)" bajo "Ajustes".
+wrs_zoho_settings_page_html(): Renderiza el HTML de la página de ajustes.
+wrs_zoho_settings_init(): Registra los ajustes (wrs_zoho_options) y añade las secciones y campos (Habilitar, Dominio API, Client ID, Client Secret, Refresh Token, Módulo Zoho).
+Callbacks de campos (wrs_zoho_field_*_cb): Renderizan cada campo del formulario de ajustes.
+wrs_zoho_options_sanitize(): Sanitiza las opciones antes de guardarlas.
+Funciones Clave (Parte B - Lógica de Envío):
+wrs_zoho_log_message(): Función helper para logging.
+wrs_get_zoho_access_token(): Obtiene/refresca el Access Token de Zoho CRM usando el Refresh Token y las credenciales de la API, almacenando el Access Token en un transitorio de WordPress.
+wrs_send_user_data_to_zoho_crm(): Se engancha a woocommerce_created_customer. Recopila todos los datos del nuevo usuario (incluyendo todos los campos wrs_*, referente, iniciativa de origen), los mapea a los campos API de Zoho Contacts (según la configuración del plugin), y envía los datos a la API v5 de Zoho CRM. Maneja errores y registra el proceso. Condicionalmente omite Lead_Source si el módulo es "Contacts".
+3.14. includes/wrs-enqueue-assets.php
+
+Rol: Centraliza el encolado de todos los archivos CSS y JavaScript.
+Funciones Clave:
+wrs_frontend_enqueue_assets(): Enganchado a wp_enqueue_scripts.
+Encola assets/css/wrs-frontend-styles.css en las páginas de "Mi Perfil WRS" e "Iniciativas".
+Encola assets/js/wrs-registration-dynamics.js (con jquery como dependencia y wrs_ajax_object localizado) en las páginas de "Mi Cuenta" (para el formulario de registro y el de perfil).
+(Nota: El script de Google Charts para "Mi Red" en frontend se encola directamente en wrs_genealogy_tree_endpoint_content por ahora).
+wrs_admin_enqueue_assets(): Enganchado a admin_enqueue_scripts.
+Encola assets/css/wrs-admin-styles.css en las páginas de perfil de usuario admin y en la página "Red de Referidos".
+Encola assets/css/wrs-frontend-styles.css en "Red de Referidos" para estilizar los nodos del gráfico.
+Encola google-charts-loader.js y assets/js/wrs-genealogy-chart.js en la página "Red de Referidos".
+Prepara y localiza los datos ($chart_data_admin) para el gráfico de la red de admin, incluyendo la lógica de filtrado por "Iniciativa" (basada en $_GET['wrs_initiative_filter'] y usando _wrs_origin_landing_id y wrs_get_all_descendants_ids()).
+3.15. assets/
+
+css/wrs-frontend-styles.css: Estilos para el formulario de perfil en "Mi Cuenta" y los nodos del gráfico de genealogía en frontend.
+css/wrs-admin-styles.css: Estilos para el área de administración, como ocultar secciones de WooCommerce en el perfil de usuario y estilos para los nodos del gráfico en la página de Red de Referidos.
+js/wrs-registration-dynamics.js: Script jQuery que maneja la carga dinámica de municipios basada en la selección del departamento en los formularios de registro y perfil. Usa AJAX para llamar a wrs_ajax_get_municipios_handler.
+js/wrs-genealogy-chart.js: Script JavaScript que usa Google Charts para dibujar el organigrama/árbol genealógico. Recibe los datos (wrsChartData o wrsAdminChartData) localizados desde PHP.
+3.16. templates/single-wrs_landing_page-template.php
+
+Plantilla PHP utilizada para mostrar el contenido de las "Iniciativas" (CPT wrs_landing_page). Simula una página de ancho completo y muestra the_content(), permitiendo que Elementor Pro u otro constructor de páginas maneje el diseño interno.
+4. Flujo de Datos Clave:
+
+Registro:
+Usuario visita Iniciativa con ?ref=LOGIN_REFERENTE.
+wrs_capture_referrer_and_initiative_session() (en init o template_redirect):
+Guarda ID del referente en cookie wrs_referrer_id.
+Guarda ID de la iniciativa en $_SESSION['wrs_origin_landing_id'].
+Usuario va al formulario de registro (woocommerce_register_form).
+wrs_add_custom_registration_fields() muestra campos WRS. JS (wrs-registration-dynamics.js) maneja selectores Dep/Mun.
+Al enviar, wrs_validate_custom_registration_fields() valida (incluyendo email existente y mensaje de iniciativa de origen).
+wrs_prevent_autologin_after_registration() (en wp_loaded) añade filtro para no auto-login.
+woocommerce_created_customer se dispara:
+wrs_save_custom_registration_fields() guarda todos los metas WRS, _wrs_referrer_id, _wrs_origin_landing_id, _wrs_can_refer='yes'.
+wrs_send_user_data_to_zoho_crm() envía datos a Zoho Contacts.
+wrs_registration_completed_actions() añade aviso de éxito y asegura logout.
+WooCommerce redirige a /my-account/, donde se muestra el aviso.
+Actualización de Perfil (Frontend - "Mi Perfil"):
+wrs_my_profile_endpoint_content() muestra el formulario con datos WRS y campos de contraseña/email de WC.
+Al enviar (name="save_account_details" y nonce save-account-details-nonce):
+woocommerce_save_account_details_errors se dispara -> wrs_validate_my_profile_details() valida campos WRS.
+woocommerce_save_account_details se dispara -> WooCommerce guarda email/contraseña. NUESTRA función wrs_save_my_profile_details_action() también se engancha aquí para guardar los campos wrs_*.
+WooCommerce maneja avisos y redirección a la misma página.
+Actualización de Perfil (Admin):
+wrs_display_custom_user_profile_section() muestra datos WRS y checkbox _wrs_can_refer.
+wrs_save_custom_user_profile_fields() guarda _wrs_can_refer.
+5. Puntos de Configuración y Dependencias:
+
+Plugin Contact Form 7 (mencionado para una funcionalidad futura, no implementado aún).
+Tema WoodMart y Elementor Pro (contexto del sitio).
+WooCommerce (esencial para registro y "Mi Cuenta").
+API de Zoho CRM (credenciales configurables para la integración).
+Google Charts (para visualización de la red).
+6. Consideraciones de Seguridad Implementadas (Hasta Ahora):
+
+Sanitización de entradas (sanitize_text_field, absint, sanitize_email, etc.) en todos los manejadores de formularios y guardado de metas.
+Escapado de salidas (esc_html, esc_attr, esc_url, esc_textarea) en todas las funciones que generan HTML.
+Uso de Nonces en formularios de admin (exportación CSV, guardado de perfil en admin) y en el formulario de actualización de perfil de frontend.
+Comprobación de permisos (current_user_can('manage_options') o edit_users/edit_user) para acciones de administración y edición de perfiles.
+Prevención de acceso directo a archivos PHP.
+Manejo seguro de credenciales API de Zoho (guardadas en wp_options, no hardcodeadas).

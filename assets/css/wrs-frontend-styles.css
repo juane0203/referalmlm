@@ -1,0 +1,254 @@
+/* Estilos para el formulario de perfil en Mi Cuenta */
+
+.wrs-profile-avatar {
+    margin-bottom: 25px;
+    float: none; /* Asegurar que no flote si el tema lo hacía */
+}
+
+.wrs-profile-avatar img {
+   border-radius: 50%; /* Hace el avatar redondo */
+   border: 2px solid #eee;
+   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.wrs-profile-edit-form {
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+/* Ajustes generales para párrafos dentro del formulario */
+.wrs-profile-edit-form p.form-row,
+.wrs-profile-edit-form fieldset p.form-row { /* Incluir párrafos dentro de fieldset */
+   padding: 0;
+   margin-bottom: 15px; /* Espacio entre filas */
+}
+
+/* Estilo para las etiquetas */
+.wrs-profile-edit-form label {
+    display: block; /* Asegura que la etiqueta esté sobre el campo */
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+/* Estilo para inputs, textareas, selects */
+.wrs-profile-edit-form input[type="text"],
+.wrs-profile-edit-form input[type="email"],
+.wrs-profile-edit-form input[type="tel"],
+.wrs-profile-edit-form input[type="number"],
+.wrs-profile-edit-form input[type="password"],
+.wrs-profile-edit-form select,
+.wrs-profile-edit-form textarea {
+    width: 100%; /* Ocupar ancho completo */
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    box-sizing: border-box; /* Incluir padding y borde en el ancho */
+}
+
+.wrs-profile-edit-form input[type="number"] {
+     width: 120px; /* Ancho específico para el campo edad */
+     max-width: 100%;
+}
+
+
+.wrs-profile-edit-form input[readonly="readonly"] {
+    background-color: #f8f8f8;
+    cursor: not-allowed;
+}
+
+.wrs-profile-edit-form fieldset { /* Estilo para el grupo de contraseña */
+    border: 1px solid #e5e5e5;
+    padding: 1.5em;
+    margin: 0 0 1.5em;
+    border-radius: 3px;
+}
+
+.wrs-profile-edit-form legend { /* Estilo para el título del fieldset */
+    font-weight: bold;
+    padding: 0 0.5em;
+    margin-left: -0.5em; /* Ajuste para alinear con borde */
+}
+
+
+.wrs-profile-edit-form button[type="submit"] {
+    /* Heredará estilos de .woocommerce-Button .button que añadimos en el form */
+    /* Puedes añadir estilos específicos si es necesario */
+    /* Ejemplo: */
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+@media (min-width: 768px) { /* Aplicar solo en pantallas más grandes */
+    .wrs-profile-edit-form .form-row-first {
+        width: 48%;
+        float: left;
+        margin-right: 4%;
+    }
+    .wrs-profile-edit-form .form-row-last {
+        width: 48%;
+        float: right;
+        margin-right: 0;
+    }
+     .wrs-profile-edit-form .form-row-first input,
+     .wrs-profile-edit-form .form-row-first select,
+     .wrs-profile-edit-form .form-row-last input,
+     .wrs-profile-edit-form .form-row-last select {
+        width: 100%;
+    }
+    /* Clearfix para el contenedor del formulario si se usan flotantes */
+    .wrs-profile-edit-form::after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+}
+
+/* Clearfix general */
+.wrs-profile-edit-form .clear,
+.wrs-profile-edit-form fieldset + .clear /* Limpiar después de fieldset también */
+ {
+    clear: both;
+    height: 0;
+    font-size: 0;
+    line-height: 0;
+}
+
+
+/* === ESTILOS PARA GRÁFICOS DE RED WRS === */
+
+/* Contenedor del Gráfico (Canvas) */
+.wrs-genealogy-chart-container {
+    background-color: #FFFFFF; /* Fondo blanco puro y sólido */
+    padding: 20px;
+    border: 1px solid #e0e0e0; /* Borde sutil opcional */
+    overflow-x: auto; /* Permite scroll horizontal si el gráfico es ancho */
+    min-height: 300px; /* Altura mínima para que el div tenga espacio */
+}
+
+/* Estilo base para todos los nodos (círculos) */
+.wrs-chart-node-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-radius: 50%; /* ESTO LOS HACE CÍRCULOS */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: 5px; 
+    box-sizing: border-box;
+    overflow: hidden;
+    border: 2px solid transparent; /* Borde base, se coloreará después */
+    color: #FFFFFF; /* Color de texto por defecto para contraste */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; /* Fuente estándar de WP Admin */
+}
+
+.wrs-chart-node-circle .wrs-node-text {
+    font-size: 10px; /* Ajusta según sea necesario para que quepa */
+    font-weight: 500;
+    line-height: 1.1;
+    padding: 0 2px;
+    word-break: break-word; /* O 'break-all' si es necesario */
+    max-width: 100%;
+}
+
+/* Nodos Principales ("Cabezas de Red") */
+.wrs-node-main-green {
+    width: 70px;  /* Diámetro nodo principal */
+    height: 70px;
+    background-color: #2ECC71; /* Verde brillante */
+    border-color: #27ae60; /* Borde un poco más oscuro */
+}
+.wrs-node-main-green .wrs-node-text {
+    font-size: 11px; /* Un poco más grande para el nodo principal */
+}
+
+/* Nodos Subordinados (Miembros Downline) */
+.wrs-node-sub { /* Clase común para todos los subordinados */
+    width: 50px; /* Diámetro más pequeño */
+    height: 50px;
+}
+.wrs-node-sub .wrs-node-text {
+    font-size: 9px; /* Un poco más pequeño para nodos subordinados */
+}
+
+/* Paleta de colores para subordinados */
+.wrs-node-blue1 { background-color: #3498DB; border-color: #2980B9; }
+.wrs-node-blue2 { background-color: #5DADE2; border-color: #3498DB; }
+.wrs-node-magenta1 { background-color: #E91E63; border-color: #c2185b; }
+.wrs-node-magenta2 { background-color: #F06292; border-color: #E91E63; } /* Corregido: guion, no guion bajo */
+
+
+/* Efecto Hover (Opcional) */
+.wrs-chart-node-circle:hover {
+    transform: scale(1.08);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+    transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+/* Estilos para las líneas de conexión de Google Charts */
+.google-visualization-orgchart-linebottom,
+.google-visualization-orgchart-lineleft,
+.google-visualization-orgchart-lineright,
+.google-visualization-orgchart-linetop {
+    border-color: #CCCCCC !important; /* Gris claro */
+}
+
+/* Resetear estilos por defecto de los contenedores de Google Charts */
+/* Importante para que nuestros estilos de círculo tomen precedencia */
+table.google-visualization-orgchart-table,
+.google-visualization-orgchart-nodes,
+.google-visualization-orgchart-node,
+.google-visualization-orgchart-node-medium { /* Google usa esta clase para 'medium' size */
+    border: none !important;
+    background: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    text-align: center; /* Ayuda a centrar el div del nodo si Google añade padding */
+}
+/* === FIN ESTILOS GRÁFICOS WRS === */
+
+/* Estilos para el Tooltip Personalizado con Cytoscape-Popper */
+/* Estilo para cuando el nodo tiene la clase .hover-effect aplicada por JS */
+.cytoscape-container node.hover-effect, /* Para ser más específico si es necesario */
+node.hover-effect { /* O simplemente la clase */
+    border-width: 1px !important; /* Aumentar borde */
+    border-color: #333333 !important; /* Borde más oscuro */
+    /* opacity: 0.85;  Puedes añadir esto si lo deseas */
+}
+
+
+.wrs-node-tooltip-popper {
+    position: absolute; 
+    background-color: rgba(30, 30, 30, 0.95); 
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    line-height: 1.4;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    z-index: 10001; 
+    pointer-events: none; 
+    display: none;  
+    max-width: 250px; 
+    text-align: left;
+}
+.wrs-node-tooltip-popper small {
+    display: block;
+    font-size: 0.85em;
+    color: #cccccc;
+    margin-top: 3px;
+}
+
+.woocommerce-EditAccountForm .clear {
+    clear: both;
+    height: 0;
+    font-size: 0;
+    line-height: 0;
+    padding: 0;
+    margin: 0;
+}
+/* Para los checkboxes de temas de interés, que la etiqueta no sea bold */
+.wrs-checkbox-group-inner label.checkbox-label {
+    font-weight: normal;
+}
